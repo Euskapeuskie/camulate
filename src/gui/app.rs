@@ -277,7 +277,6 @@ impl eframe::App for CamApp {
         let (ui_width, ui_height) = (ui_total_size.x, ui_total_size.y);
         
     	egui::CentralPanel::default().show(ctx, |ui| {
-            ctx.request_repaint();
             
             // ----- MENU BAR -----
             egui::menu::bar(ui, |ui| {
@@ -416,6 +415,10 @@ impl eframe::App for CamApp {
                 // UI for cam system if not summary
                 if self.system_names[self.open_system_id] != "Summary" {
                     self.ui_cam_system(ctx, ui, ui_width, remaining_height);
+                    // Only continuously redraw if animation speed > 0
+                    if self.cam_systems[self.open_system_id].animation_speed > 0.0 {
+                        ctx.request_repaint();
+                    }
                 } 
                 // UI for summary of all system
                 else {

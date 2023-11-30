@@ -1,4 +1,5 @@
 - Hertzsche Pressung auch für Rückseitigen Kontakt berechnen (Wulst und Nutkurven) als zweite Kurve im Diagramm
+- UI: Einklappen von Eingabefenstern
 - Übersicht extremwerte der Bewegung
 - Bei zylindrischen Kurvenscheiben keine Rastbewegung angeben wenn 0
 - Federkraft noch ändern, dass immer der kleinste Radiuswert genommen wird
@@ -30,7 +31,6 @@
     1) Wendepunktverschiebung muss immer Ruckfreiheit gewährleisten ---> Berechnung nach VDI 2143
     2) Optimierung auf Basis von z.B. L10h etc.
 - Optimieren der hinteren Kurvenscheibe
-- UI: Einklappen von Eingabefenstern
 
 
 
