@@ -20,9 +20,13 @@ pub struct CamApp {
     system_names: Vec<String>,
     selected_plots: Vec<Vec<Vec<PlotKind>>>,
     open_system_id: usize,
+
+    name_edit: bool,
+
     plot_fullscreen: bool,
     plot_fullscreen_index: usize,
     animation_fullscreen: bool,
+
     save_path: Option<String>,
     export_accuracy: f64,
 }
@@ -35,6 +39,7 @@ impl Default for CamApp {
             system_names: vec![format!("Default"), format!("Summary")],
             selected_plots: vec![vec![vec![PlotKind::Position]]],
             open_system_id: 0,
+            name_edit: false,
             plot_fullscreen: false,
             plot_fullscreen_index: 0,
             animation_fullscreen: false,
@@ -58,18 +63,13 @@ impl CamApp {
         let name = &mut self.system_names[self.open_system_id];
         let plots = &mut self.selected_plots[self.open_system_id];
 
-        ui.horizontal(|ui| {
-            ui.label("Cam system name:");
-            ui.text_edit_singleline(name);
-        });
-
         let remaining_height = ui.available_height();
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
                 let height_cam_mod = system.ui_cam_modification(ui, 700.0, height).rect.height();
-                system.ui_overview_results(ui, 700.0, height);
-                if system.plot_animation(ui, 700.0, remaining_height-height_cam_mod).middle_clicked() {
+                let height_res = system.ui_overview_results(ui, 700.0, height).rect.height();
+                if system.plot_animation(ui, 700.0, remaining_height-height_cam_mod-height_res).middle_clicked() {
                     self.animation_fullscreen = !self.animation_fullscreen;
                 };
             });
@@ -364,9 +364,12 @@ impl eframe::App for CamApp {
             // --- TOP LAYER TO MANAGE DIFFERENT CAM SYSTEMS ---
             ui.horizontal( |ui| {
                 let mut removes: Vec<usize> = vec![];
-                for (i, system) in self.system_names.iter().enumerate() {
+                for i in 0..self.cam_systems.len() {
                     ui.group(|ui| {
                         let label = ui.selectable_value(&mut self.open_system_id, i, &self.system_names[i]);
+                        if label.double_clicked() & (self.system_names[i] != "Summary".to_string()) {
+                            self.name_edit = !self.name_edit;
+                        }
                         // Show a cross to remove the label if it is the selected one
                         if i == self.open_system_id {
                             let top_right = label.rect.right_top();
@@ -375,6 +378,11 @@ impl eframe::App for CamApp {
                             let rect = Rect::from_two_pos(bottom_left, top_right);
                             if ui.put(rect, egui::Button::new("x")).clicked() {
                                 removes.push(i);
+                            }
+                            if self.name_edit {
+                                if ui.put(label.rect, egui::TextEdit::singleline(&mut self.system_names[i])).lost_focus() {
+                                    self.name_edit = !self.name_edit;
+                                };
                             }
                         }
                     }).response;
