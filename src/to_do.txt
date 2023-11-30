@@ -1,0 +1,46 @@
+- Hertzsche Pressung auch für Rückseitigen Kontakt berechnen (Wulst und Nutkurven) als zweite Kurve im Diagramm
+- Übersicht extremwerte der Bewegung
+- Bei zylindrischen Kurvenscheiben keine Rastbewegung angeben wenn 0
+- Federkraft noch ändern, dass immer der kleinste Radiuswert genommen wird
+- C_dyn und C_stat als zusätzliche Eingabe und Berechnung von L10_h und statischer Sicherheitsbeiwert
+    C_stat: 4100N
+    C_dyn: 3550N
+
+- Kurven
+    - Simple Zylinderkurve
+    - Planare Wulstkurve mit 2 Followern
+    - Planarer Schieber
+- Diagramme
+    - Hertzsche Pressung für Nutkurven mit rückseitiger Kurve berechnen
+    - Real bearing forces
+    - Wenn animation speed 0% dann Kurven manuell drehbar machen
+    - Zahlen werden dunkler beim rauszoomen --> feinstellbar?
+    - Summary die einzelnen Kurven als verbundene Graphen it Multiplot
+    - [nice to have: In den plots den bereich von abschnitten farbig hinterlegen]
+- Ordenltihce Implementation für Prozesskräfte
+    - Stanzen ordenltiche Kurve nicht nur Parabel
+    - Reibung noch ordenltihc rein, wirkt ja nur wenn sich auch was am abtrieb bewegt
+    - Stitching
+- Ordentliche Function annotations
+
+- Forcieren bei new, dass wenn nicht gespeichert neuer file dialog
+- Wendepunktverschiebung für Bewegungsgesetze + weitere Bewegungsgesetze
+    - Wendepunktverschiebung für Rast-Umkehr --> Umkehr-Rast: Welche Wendepunkte muss ich für beide Kurvenabschnitte wählen
+    um kleinstmögliche Extremwerte bei der Beschleunigung zu erzeugen?
+    1) Wendepunktverschiebung muss immer Ruckfreiheit gewährleisten ---> Berechnung nach VDI 2143
+    2) Optimierung auf Basis von z.B. L10h etc.
+- Optimieren der hinteren Kurvenscheibe
+- UI: Einklappen von Eingabefenstern
+
+
+
+- Simulation:
+    - Kollisionszeit ist aktuell fix 0,55ms, das stimmt aber nicht
+    --> duration of an impulse steel F(x) aus Hertzscher Kontaktmechanik
+    https://physics.emory.edu/faculty/brody/Advanced%20Lab/Advanced-Lab-Elasticity3.pdf
+
+    W_mech = integral(F(x)*dx)
+    1/2mv² = integral(F(x)*dx)
+    --> umstellen nach x, dann kennt man die einpresstiefe
+
+pos_rolle(t) = }}F(x)/m ....=???
