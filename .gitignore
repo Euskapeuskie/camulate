@@ -1,1 +1,3 @@
 /target
+/assetts
+!/target/release/camulate.exe
