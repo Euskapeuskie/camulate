@@ -1,3 +1,6 @@
-/target
-/assetts
+/target/*.*
+/target/release/*
 !/target/release/camulate.exe
+/target/debug
+/assetts
+
