@@ -122,6 +122,8 @@ pub struct CamSystem {
     pub index: usize,
     pub animation_speed: f64,
     pub max_hertz: f64,
+    pub c_stat: f64,
+    pub c_dyn: f64,
     pub cam_disc_feasible: CamFeasibility,
     pub p_equiv: f64,
 
@@ -311,6 +313,8 @@ impl CamSystem {
             index: 0,
             animation_speed: 20.0,
             max_hertz: max_hertz,
+            c_stat: 4100.0,
+            c_dyn: 3500.0,
             cam_disc_feasible: cam_disc_feasible,
             p_equiv: p_equiv,
 

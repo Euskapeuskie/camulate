@@ -381,12 +381,6 @@ impl CamSystem {
 
     pub fn ui_cam_modification(&mut self, ui: &mut egui::Ui, width: f32, height: f32) -> egui::Response {
         let cam_type_list: [CamType; 4] = [CamType::PlanarDisc, CamType::PlanarGroove(PlanarGroove::default()), CamType::CylindricBead(CylindricBead::default()), CamType::CylindricGroove(CylindricGroove::default())];
-        let mut dict_colormap: HashMap<CamFeasibility, [f32;4]> = HashMap::new();
-        dict_colormap.insert(CamFeasibility::OK, [0.0, 255.0, 0.0, 0.001]);
-        dict_colormap.insert(CamFeasibility::FollowerLiftOff, [255.0, 0.0, 0.0, 0.001]);
-        dict_colormap.insert(CamFeasibility::HertzPressure, [255.0, 125.0, 0.0, 0.001]);
-        dict_colormap.insert(CamFeasibility::Undercut, [255.0, 0.0, 0.0, 0.001]);
-
         let mut rs = vec![];
 
         let response = ui.vertical(|ui| {
@@ -476,33 +470,27 @@ impl CamSystem {
                     .suffix(" N/mm²"))
                 .on_hover_text("PMax. allowed hertzian pressure of either contact partner");
 
-                ui.label("Cam feasibility:").rect;
-                let [r, g, b, a] = dict_colormap[&self.cam_disc_feasible];
-                ui.add_sized([col_width, 20.0], egui::Label::new(
-                    egui::RichText::new(format!("{:?}", self.cam_disc_feasible)).color(egui::Color32::from_rgb(r as u8, g as u8, b as u8))))
-                    .on_hover_text( match self.cam_disc_feasible {
-                        CamFeasibility::OK => "Cam system OK",
-                        CamFeasibility::FollowerLiftOff => "Follower lifts off from cam disc, try increasing spring forces",
-                        CamFeasibility::HertzPressure => "Hertzian pressure > p_max, try decreasing forces or change of follower radius/cam disc",
-                        CamFeasibility::Undercut => "Cam disc not feasible, try to either change roller diameter or section definitions",
-                    });
-                let rect = Rect::from_min_max(
-                    egui::Pos2::new(res_spring_preload.rect.left_bottom().x, res_spring_preload.rect.left_bottom().y+3.0),
-                    egui::Pos2::new(res_spring_preload.rect.right_bottom().x, res_spring_preload.rect.left_bottom().y+23.0));
-                
-                ui
-                    .painter()
-                    .rect_filled(rect, 2.0, Rgba::from_rgba_unmultiplied(r, g, b, a));
+                ui.label("C_stat:");
+                let res_c_stat = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_stat)
+                    .speed(1.0)
+                    .update_while_editing(false)
+                    .clamp_range(0.0..=std::f64::INFINITY)
+                    .suffix(" N"))
+                .on_hover_text("C_stat according followers data sheet");
+                ui.label("C_dyn:");
+                let res_c_dyn = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_dyn)
+                    .speed(1.0)
+                    .update_while_editing(false)
+                    .clamp_range(0.0..=std::f64::INFINITY)
+                    .suffix(" N"))
+                .on_hover_text("C_dyn according followers data sheet");
 
-                ui.label("Equivalent load:");
-                ui.label(format!("{:.2} N", self.p_equiv)).on_hover_text( {
-                    if self.p_equiv.is_nan() {
-                        "Make sure the follower doesn't lift off to allow for a calculation"
-                    } else { "Equivalent load for the calculation of L10 or L10_h" }
-                });
                 ui.end_row();
 
-                let r = res_cam_type.changed() | res_rpm.changed() | res_grav.changed() | res_contact_length.changed() | res_mass.changed() | res_radius.changed() | res_spring_preload.changed() | res_spring_rate.changed() | res_max_hertz.changed();
+                let r = res_cam_type.changed() | res_rpm.changed() | res_grav.changed() 
+                | res_contact_length.changed() | res_mass.changed() | res_radius.changed()
+                | res_spring_preload.changed() | res_spring_rate.changed() | res_max_hertz.changed()
+                | res_c_stat.changed() | res_c_dyn.changed();
                 rs.push(r);
                 
                 // Additional row only for cylindric bead cam
@@ -605,14 +593,38 @@ impl CamSystem {
         let max_hertz = self.ideal_hertz_pressure.iter().max_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| std::cmp::Ordering::Equal))
         .unwrap_or_else(|| &std::f64::NAN);
 
+        let mut dict_colormap: HashMap<CamFeasibility, [f32;4]> = HashMap::new();
+        dict_colormap.insert(CamFeasibility::OK, [0.0, 255.0, 0.0, 0.001]);
+        dict_colormap.insert(CamFeasibility::FollowerLiftOff, [255.0, 0.0, 0.0, 0.001]);
+        dict_colormap.insert(CamFeasibility::HertzPressure, [255.0, 125.0, 0.0, 0.001]);
+        dict_colormap.insert(CamFeasibility::Undercut, [255.0, 0.0, 0.0, 0.001]);
 
-        let response = egui::CollapsingHeader::new(egui::widget_text::RichText::new("Results").size(15.0).underline())
+        let col_width = 1.75*width/10.0;
+
+        let response = ui.vertical(|ui| {
+            egui::CollapsingHeader::new(egui::widget_text::RichText::new("Results").size(15.0).underline())
             .default_open(false)
             .show(ui, |ui| {
-                egui::Grid::new("Result summary").min_col_width(2.25*width/10.0).show(ui, |ui| {
+                egui::Grid::new("Result summary").max_col_width(col_width).show(ui, |ui| {
+                    
+                    ui.label("Cam feasibility:").rect;
+                    let [r, g, b, a] = dict_colormap[&self.cam_disc_feasible];
+                    let rect = ui.add_sized([col_width, 20.0], egui::Label::new(
+                        egui::RichText::new(format!("{:?}", self.cam_disc_feasible)).color(egui::Color32::from_rgb(r as u8, g as u8, b as u8))))
+                        .on_hover_text( match self.cam_disc_feasible {
+                            CamFeasibility::OK => "Cam system OK",
+                            CamFeasibility::FollowerLiftOff => "Follower lifts off from cam disc, try increasing spring forces",
+                            CamFeasibility::HertzPressure => "Hertzian pressure > p_max, try decreasing forces or change of follower radius/cam disc",
+                            CamFeasibility::Undercut => "Cam disc not feasible, try to either change roller diameter or section definitions",
+                        }).rect;  
+                    ui
+                        .painter()
+                        .rect_filled(rect, 2.0, Rgba::from_rgba_unmultiplied(r, g, b, a));
+                    ui.end_row();
+
                     ui.label("Min/Max velocity:");
                     ui.label(format!("{:.2} / {:.2} m/s", min_v, max_v));
-                    ui.label("Min/Max acceleration:");
+                    ui.label("Min/Max accel.:");
                     ui.label(format!("{:.2} / {:.2} m/s²", min_a, max_a));
                     ui.end_row();
 
@@ -639,8 +651,9 @@ impl CamSystem {
                     ui.label("");
 
 
-                }).response
-        }).header_response;
+                });
+            });
+        }).response;
 
         response
     }

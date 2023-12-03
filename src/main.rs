@@ -4,7 +4,6 @@ pub mod cam_modeller;
 pub mod gui;
 
 use gui::app::CamApp;
-use std::fs;
 
 
 fn main() -> Result<(), eframe::Error> {

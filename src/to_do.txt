@@ -3,9 +3,7 @@
 - Übersicht extremwerte der Bewegung
 - Bei zylindrischen Kurvenscheiben keine Rastbewegung angeben wenn 0
 - Federkraft noch ändern, dass immer der kleinste Radiuswert genommen wird
-- C_dyn und C_stat als zusätzliche Eingabe und Berechnung von L10_h und statischer Sicherheitsbeiwert
-    C_stat: 4100N
-    C_dyn: 3550N
+- C_dyn und C_stat noch bei cam_system::new einbauen und L10/L10_h berechnen
 
 - Kurven
     - Simple Zylinderkurve
