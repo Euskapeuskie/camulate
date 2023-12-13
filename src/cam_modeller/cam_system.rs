@@ -150,7 +150,7 @@ pub struct CamSystem {
 
 
 impl CamSystem {
-    pub fn new(mut cam_type: CamType, follower: CamFollower, process_forces: ProcessForces, rpm: f64, mass: f64, spring_rate: f64, spring_pretension: f64, contact_length: f64, gravity: bool, max_hertz: f64) -> Self {
+    pub fn new(mut cam_type: CamType, follower: CamFollower, process_forces: ProcessForces, rpm: f64, mass: f64, spring_rate: f64, spring_pretension: f64, gravity: bool) -> Self {
         let n_elements = follower.phis.len();
         let gravity_value = 9.81 * (gravity as usize as f64);
         let phis_radiant = follower.phis.iter().map(|phi| phi/180.0 * PI).collect::<Vec<_>>();
@@ -243,39 +243,6 @@ impl CamSystem {
 
         // Normal forces based on the angle between F_y and normal vector to the disc
         let forces_normal = forces_y.iter().zip(&phis_contact).map(|(f_y, phi)| *f_y/phi.cos()).collect::<Vec<_>>();
-        // Hertz pressure
-        let hertz_pressure = forces_normal.iter().zip(&curvature_total)
-            .map(|(f, r)| {
-                if *f >= 0.0 { (f/(2.0*PI*r*contact_length*1_000_000.0) * (210_000.0/((1.0_f64-0.3).powi(2)))).sqrt()}
-                else { 0.0 }
-            }).collect::<Vec<_>>();
-        if (hertz_pressure.iter().any(|p| *p>=max_hertz)) & (cam_disc_feasible!=CamFeasibility::Undercut) {
-            cam_disc_feasible = CamFeasibility::HertzPressure;
-        }
-
-        // Equivalent Load
-        let omega_disc = (rpm/60.0)*360.0; // °/s
-        let d_t = omega_disc/n_elements as f64;
-        let ds = helper_functions::ds_wrapping(&xyz_disc);
-        let (ns_follower, p): (Vec<f64>, Vec<(f64, f64)>) = forces_normal.iter().zip(ds.iter()).map(|(f_n, s)| {
-                // calc rpm of the follower based on the length of the disc element s
-                let s_dot_disc = s*omega_disc/follower.accuracy; // m/s
-                let n_follower = s_dot_disc/(2.0*PI*follower.radius_follower) * 60.0; // 1/min
-                let nominator = n_follower * f_n.powf(10.0/3.0); 
-                let denominator = n_follower;
-                (n_follower, (nominator, denominator))
-            }).unzip();
-
-        let (nom, denom): (Vec<f64>, Vec<f64>) = p.into_iter().unzip();
-        let nom = helper_functions::trapz(&nom, None, Some(d_t));
-        let denom = helper_functions::trapz(&denom, None, Some(d_t));
-        let mut p_equiv = (nom/denom).powf(3.0/10.0);
-        match cam_type {
-            CamType::PlanarDisc => (),
-            CamType::PlanarGroove(_) => (),
-            CamType::CylindricBead(_) => p_equiv /= 2.0, // see master's thesis Daniel Grum, division by 2 if two follower bearings
-            CamType::CylindricGroove(_) => (),
-        }
 
         // torque = F_xyz x r_xyz
         let norm_force_vec = normal_vec.clone().iter_mut().zip(&forces_normal)
@@ -308,15 +275,15 @@ impl CamSystem {
             mass: mass,
             spring_rate: spring_rate,
             spring_pretension: spring_pretension,
-            contact_length: contact_length,
+            contact_length: 0.0,
             gravity: gravity,
+            cam_disc_feasible: cam_disc_feasible,
             index: 0,
             animation_speed: 20.0,
-            max_hertz: max_hertz,
-            c_stat: 4100.0,
-            c_dyn: 3500.0,
-            cam_disc_feasible: cam_disc_feasible,
-            p_equiv: p_equiv,
+            max_hertz: 0.0,
+            c_stat: 0.0,
+            c_dyn: 0.0,
+            p_equiv: 0.0,
 
             ideal_stroke: ideal_stroke,
             ideal_velocities: velocities,
@@ -324,10 +291,10 @@ impl CamSystem {
             ideal_force_y: forces_y,
             ideal_force_normal: forces_normal,
             ideal_torque: torque,
-            ideal_hertz_pressure: hertz_pressure,
+            ideal_hertz_pressure: vec![0.0; n_elements],
             ideal_bearing_forces_axial: bearing_forces_axial,
             ideal_bearing_forces_radial: bearing_forces_radial,
-            ideal_ns_follower: ns_follower,
+            ideal_ns_follower: vec![0.0; n_elements],
 
             real_positions: vec![0.0; n_elements],
             real_stroke: vec![0.0; n_elements],
@@ -338,6 +305,50 @@ impl CamSystem {
             real_torque: vec![0.0; n_elements],
             real_hertz_pressure: vec![0.0; n_elements],
         }
+    }
+
+    fn calc_durability_metrics(&mut self, contact_length: f64, max_hertz: f64, c_stat: f64, c_dyn: f64) -> () {
+
+        // Hertzian pressure
+        let hertz_pressure = self.ideal_force_normal.iter().zip(&self.curvature_total)
+            .map(|(f, r)| {
+                if *f >= 0.0 { (f/(2.0*PI*r*contact_length*1_000_000.0) * (210_000.0/((1.0_f64-0.3).powi(2)))).sqrt()}
+                else { 0.0 }
+            }).collect::<Vec<_>>();
+        if (hertz_pressure.iter().any(|p| *p>=max_hertz)) & (self.cam_disc_feasible != CamFeasibility::Undercut) {
+            self.cam_disc_feasible = CamFeasibility::HertzPressure;
+        }
+        // Equivalent Load p_equiv
+        let omega_disc = (self.rpm/60.0)*360.0; // °/s
+        let d_t = omega_disc/self.follower.phis.len() as f64;
+        let ds = helper_functions::ds_wrapping(&self.disc_points_xyz);
+        let (ns_follower, p): (Vec<f64>, Vec<(f64, f64)>) = self.ideal_force_normal.iter().zip(ds.iter()).map(|(f_n, s)| {
+                // calc rpm of the follower based on the length of the disc element s
+                let s_dot_disc = s*omega_disc/self.follower.accuracy; // m/s
+                let n_follower = s_dot_disc/(2.0*PI*self.follower.radius_follower) * 60.0; // 1/min
+                let nominator = n_follower * f_n.powf(10.0/3.0); 
+                let denominator = n_follower;
+                (n_follower, (nominator, denominator))
+            }).unzip();
+
+        let (nom, denom): (Vec<f64>, Vec<f64>) = p.into_iter().unzip();
+        let nom = helper_functions::trapz(&nom, None, Some(d_t));
+        let denom = helper_functions::trapz(&denom, None, Some(d_t));
+        let mut p_equiv = (nom/denom).powf(3.0/10.0);
+        match self.cam_type {
+            CamType::PlanarDisc => (),
+            CamType::PlanarGroove(_) => (),
+            CamType::CylindricBead(_) => p_equiv /= 2.0, // see master's thesis Daniel Grum, division by 2 if two follower bearings
+            CamType::CylindricGroove(_) => (),
+        }
+
+        self.contact_length = contact_length;
+        self.max_hertz = max_hertz;
+        self.c_stat = c_stat;
+        self.c_dyn = c_dyn;
+        self.p_equiv = p_equiv;
+        self.ideal_hertz_pressure = hertz_pressure;
+        self.ideal_ns_follower = ns_follower;
     }
 
     pub fn update_follower_position(&mut self, index: usize) -> () {
@@ -549,13 +560,16 @@ impl CamSystem {
             follower.add_section(section.movement_type, section.incline, section.deg_start, section.deg_end);
         }
 
-        let mut cam = Self::new(self.cam_type.clone(), follower, self.process_forces.clone(), self.rpm, self.mass, self.spring_rate, self.spring_pretension, self.contact_length, self.gravity, self.max_hertz);
+        let mut cam = Self::new(self.cam_type.clone(), follower, self.process_forces.clone(), self.rpm, self.mass, self.spring_rate, self.spring_pretension, self.gravity);
         cam.animation_speed = self.animation_speed;
+        cam.c_dyn = self.c_dyn;
+        cam.c_stat = self.c_stat;
 
         // Calculate all points up to current index for smooth transition
         for i in 0..=self.index {
             cam.update_follower_position(i)
         };
+        cam.calc_durability_metrics(self.contact_length, self.max_hertz, self.c_stat, self.c_dyn);
         *self = cam;
     }
 }
@@ -586,7 +600,8 @@ impl Default for CamSystem {
         follower.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.025, 250.0, 360.0).unwrap();
 
         let process_forces = ProcessForces::new(follower.accuracy);
-        let disc = Self::new(CamType::PlanarDisc, follower, process_forces, 60.0, 1.0, 15000.0, 50.0, 0.01, true, 1500.0);
+        let mut disc = Self::new(CamType::PlanarDisc, follower, process_forces, 60.0, 1.0, 15000.0, 50.0, true);
+        disc.calc_durability_metrics(0.01, 1500.0, 4100.0, 3500.0);
         disc
     }
 }
