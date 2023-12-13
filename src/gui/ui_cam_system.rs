@@ -630,27 +630,21 @@ impl CamSystem {
 
                     ui.label("Max Hertz pressure:");
                     ui.label(format!("{:.2} N/mm²", max_hertz));
-                    ui.end_row();
-
                     ui.label("Equivalent load:");
                     ui.label(format!("{:.2} N", self.p_equiv)).on_hover_text( {
                         if self.p_equiv.is_nan() {
                             "Make sure the follower doesn't lift off to allow for a calculation"
                         } else { "Equivalent load for the calculation of L10 or L10_h" }
                     });
-                    ui.label("Equivalent follower RPM:");
-                    // Hier muss noch rein
                     ui.end_row();
 
                     // L10: Lebensdauer in Millionen Umdrehungen
                     ui.label("L10:");
-                    ui.label("");
-
+                    ui.label(format!("{:.0} x10e6", self.l_10));
                     // L10_h: Lebensdauer in Betriebsstunden
                     ui.label("L10_h:");
-                    ui.label("");
-
-
+                    ui.label(format!("{:.0} h", self.l_10_h));
+                    ui.end_row();
                 });
             });
         }).response;

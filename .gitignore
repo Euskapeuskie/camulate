@@ -2,4 +2,5 @@
 /target/release/*
 !/target/release/camulate.exe
 /target/debug
+/target/doc
 

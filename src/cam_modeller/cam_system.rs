@@ -121,11 +121,13 @@ pub struct CamSystem {
     pub gravity: bool,
     pub index: usize,
     pub animation_speed: f64,
+    pub cam_disc_feasible: CamFeasibility,
     pub max_hertz: f64,
     pub c_stat: f64,
     pub c_dyn: f64,
-    pub cam_disc_feasible: CamFeasibility,
     pub p_equiv: f64,
+    pub l_10: f64,
+    pub l_10_h: f64,
 
     pub ideal_stroke: Vec<f64>,
     pub ideal_velocities: Vec<f64>,
@@ -284,6 +286,8 @@ impl CamSystem {
             c_stat: 0.0,
             c_dyn: 0.0,
             p_equiv: 0.0,
+            l_10: 0.0,
+            l_10_h: 0.0,
 
             ideal_stroke: ideal_stroke,
             ideal_velocities: velocities,
@@ -318,6 +322,7 @@ impl CamSystem {
         if (hertz_pressure.iter().any(|p| *p>=max_hertz)) & (self.cam_disc_feasible != CamFeasibility::Undercut) {
             self.cam_disc_feasible = CamFeasibility::HertzPressure;
         }
+
         // Equivalent Load p_equiv
         let omega_disc = (self.rpm/60.0)*360.0; // °/s
         let d_t = omega_disc/self.follower.phis.len() as f64;
@@ -342,6 +347,11 @@ impl CamSystem {
             CamType::CylindricGroove(_) => (),
         }
 
+        // L10 & L10_h
+        let l_10 = (c_dyn/p_equiv).powf(10.0/3.0);
+        let n_mean = ns_follower.iter().sum::<f64>()/(ns_follower.len() as f64);
+        let l_10_h = 16666.0/n_mean * l_10;
+
         self.contact_length = contact_length;
         self.max_hertz = max_hertz;
         self.c_stat = c_stat;
@@ -349,6 +359,8 @@ impl CamSystem {
         self.p_equiv = p_equiv;
         self.ideal_hertz_pressure = hertz_pressure;
         self.ideal_ns_follower = ns_follower;
+        self.l_10 = l_10;
+        self.l_10_h = l_10_h;
     }
 
     pub fn update_follower_position(&mut self, index: usize) -> () {
