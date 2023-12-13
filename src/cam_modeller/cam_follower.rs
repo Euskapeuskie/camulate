@@ -5,6 +5,13 @@ use super::movement_laws_rest::MovementLawsRest;
 use super::movement_laws_rest_rest::MovementLawsRestRest;
 use super::movement_laws_rest_return::{MovementLawsRestReturn, MovementLawsReturnRest};
 
+/// Struct for building the follower movement according VDI 2143
+/// 
+/// * `phis`: Vector of the angles in [°], automatically calculated based on accuracy
+/// * `radius`: Vector of the calculated radius based on the sections that were added
+/// * `radius_follower`: Radius of the follower bearing
+/// * `accuracy`: Accuracy in [°], typically something like 0.01. Big influence on computational effort
+/// * `sections`: Vector of the sections that have been added
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CamFollower {
     pub phis: Vec<f64>,
@@ -14,6 +21,12 @@ pub struct CamFollower {
     pub sections: Vec<Section>,
 }
 
+
+/// Movement types based on VDI 2143
+/// * `Rest`: No stroke at all
+/// * `RestRest`: Rest to rest movement
+/// * `RestReturn`: Rest to return movement, usually followed by a return to rest movement
+/// * `ReturnRest`: Return to rest movement, usually after a rest to return movement
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
 pub enum MovementType {
     Rest(MovementLawsRest),
@@ -33,7 +46,11 @@ impl Display for MovementType {
     }
 }
 
-
+/// Struct that holds the relevant data about a specific section of the cam follower
+/// * `deg_start`: Start value in [°] of this sections
+/// * `deg_end`: End value in [°] of this sections
+/// * `movement_type`: 'MovementType` of this section
+/// * `incline`: Stroke in this section
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Section {
     pub deg_start: f64,
@@ -136,6 +153,8 @@ impl CamFollower {
 
 
     /// Sorts the sections of the follower by deg_start in ascending order
+    /// Necessary to use before constructing a cam_system so that sections where only a stroke/incline
+    /// is specified, we can find the radius of the previous section
     pub fn sort_sections(&mut self) -> () {
         self.sections.sort_by(|a, b| a.deg_start.total_cmp(&b.deg_start));
     }
