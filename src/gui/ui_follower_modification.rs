@@ -132,7 +132,7 @@ impl CamFollower {
                 });
                 // Button for adding a section
                 if ui.button("Add section").clicked() {
-                    self.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.0, 360.0 - 2.0*self.accuracy, 360.0);
+                    self.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.0, 360.0 - 2.0*self.accuracy, 360.0, 0.5);
                     rs.push(true);
                 }
 

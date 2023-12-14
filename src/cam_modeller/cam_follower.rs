@@ -57,11 +57,18 @@ pub struct Section {
     pub deg_end: f64,
     pub movement_type: MovementType,
     pub incline: f64,
+    pub lambda: f64,
 }
 
 impl Section {
-    pub fn new(deg_start: f64, deg_end: f64, movement_type: MovementType, incline: f64) -> Self {
-        Section { deg_start: deg_start, deg_end: deg_end, movement_type: movement_type, incline: incline }
+    pub fn new(deg_start: f64, deg_end: f64, movement_type: MovementType, incline: f64, lambda: f64) -> Self {
+        Section {
+            deg_start: deg_start,
+            deg_end: deg_end,
+            movement_type: movement_type,
+            incline: incline,
+            lambda: lambda,
+        }
     }
 }
 
@@ -111,7 +118,7 @@ impl CamFollower {
     /// 
     /// # Returns
     /// `None`
-    pub fn add_section(&mut self, movement_law: MovementType, incline: f64, deg_start: f64, deg_end: f64) -> Result<(), String> {
+    pub fn add_section(&mut self, movement_law: MovementType, incline: f64, deg_start: f64, deg_end: f64, lambda: f64) -> Result<(), String> {
 
         // Round degree inputs to the precision of the accuracy
         let deg_start = (deg_start / self.accuracy).round() * self.accuracy;
@@ -135,8 +142,8 @@ impl CamFollower {
         let mut rs = match movement_law {
             MovementType::Rest(x) => x.calc_radius(incline-last_element+self.radius_follower, n_elements),
             MovementType::RestRest(x) => x.calc_radius(incline, n_elements),
-            MovementType::RestReturn(x) => x.calc_radius(incline, n_elements, Some(0.5)),
-            MovementType::ReturnRest(x) => x.calc_radius(incline, n_elements, Some(0.5)),
+            MovementType::RestReturn(x) => x.calc_radius(incline, n_elements, lambda),
+            MovementType::ReturnRest(x) => x.calc_radius(incline, n_elements, lambda),
         };
 
         rs.iter_mut().for_each(|r| *r += last_element);
@@ -144,7 +151,7 @@ impl CamFollower {
         // replace the existing radius with the calculated section and add the section
         if let Some(slice) = self.radius.get_mut(index_start..=index_end) {
             slice.copy_from_slice(&rs);
-            self.sections.push(Section::new(deg_start, deg_end, movement_law, incline)); 
+            self.sections.push(Section::new(deg_start, deg_end, movement_law, incline, lambda)); 
             return Ok(())
         }
 

@@ -23,11 +23,7 @@ impl MovementLawsRestReturn {
     /// * `incline`: Incline of the section in mm
     /// * `n_elements`: Number of elements to calculate the section for
     /// * `lambda`: Wendepunktverschiebung
-    pub fn calc_radius(&self, incline: f64, n_elements: usize, lambda: Option<f64>) -> Vec<f64> {
-        let lambda = match lambda {
-            Some(x) => x,
-            None => 0.5
-        };
+    pub fn calc_radius(&self, incline: f64, n_elements: usize, lambda: f64) -> Vec<f64> {
         match self {
             Self::AccelerationTrapezoid => acceleration_trapezoid_rest_return(incline, n_elements, lambda),
             Self::HarmonicCombination => harmonic_combination_rest_return(incline, n_elements, lambda),
@@ -49,11 +45,7 @@ impl Display for MovementLawsRestReturn {
 
 // --- Movement Laws RETURN TO REST ---
 impl MovementLawsReturnRest {
-    pub fn calc_radius(&self, incline: f64, n_elements: usize, lambda: Option<f64>) -> Vec<f64> {
-        let lambda = match lambda {
-            Some(x) => x,
-            None => 0.5,
-        };
+    pub fn calc_radius(&self, incline: f64, n_elements: usize, lambda: f64) -> Vec<f64> {
         match self {
             Self::AccelerationTrapezoid => acceleration_trapezoid_return_rest(incline, n_elements, lambda),
             Self::HarmonicCombination => harmonic_combination_return_rest(incline, n_elements, lambda),

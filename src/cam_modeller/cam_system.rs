@@ -568,8 +568,9 @@ impl CamSystem {
         // New follower and its dynamics
         let mut follower = CamFollower::new(self.follower.radius_follower, self.follower.accuracy);
 
-        for section in self.follower.sections.iter() {
-            follower.add_section(section.movement_type, section.incline, section.deg_start, section.deg_end);
+        for (i, section) in self.follower.sections.iter().enumerate() {
+            let lambda = 0.5;
+            follower.add_section(section.movement_type, section.incline, section.deg_start, section.deg_end, lambda);
         }
 
         let mut cam = Self::new(self.cam_type.clone(), follower, self.process_forces.clone(), self.rpm, self.mass, self.spring_rate, self.spring_pretension, self.gravity);
@@ -606,10 +607,10 @@ pub fn calc_force_y(cam_type: &CamType, mass: f64, spring_rate: f64, spring_pret
 impl Default for CamSystem {
     fn default() -> Self {
         let mut follower = CamFollower::new(0.012, 0.1);
-        follower.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.025, 0.0, 150.0).unwrap();
-        follower.add_section(MovementType::RestRest(MovementLawsRestRest::SineModified), 0.006, 150.0, 200.0).unwrap();
-        follower.add_section(MovementType::RestRest(MovementLawsRestRest::SineModified), -0.006, 200.0, 250.0).unwrap();
-        follower.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.025, 250.0, 360.0).unwrap();
+        follower.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.025, 0.0, 150.0, 0.5).unwrap();
+        follower.add_section(MovementType::RestRest(MovementLawsRestRest::SineModified), 0.006, 150.0, 200.0, 0.5).unwrap();
+        follower.add_section(MovementType::RestRest(MovementLawsRestRest::SineModified), -0.006, 200.0, 250.0, 0.5).unwrap();
+        follower.add_section(MovementType::Rest(MovementLawsRest::Rest), 0.025, 250.0, 360.0, 0.5).unwrap();
 
         let process_forces = ProcessForces::new(follower.accuracy);
         let mut disc = Self::new(CamType::PlanarDisc, follower, process_forces, 60.0, 1.0, 15000.0, 50.0, true);

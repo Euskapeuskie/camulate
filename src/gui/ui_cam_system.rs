@@ -599,13 +599,13 @@ impl CamSystem {
         dict_colormap.insert(CamFeasibility::HertzPressure, [255.0, 125.0, 0.0, 0.001]);
         dict_colormap.insert(CamFeasibility::Undercut, [255.0, 0.0, 0.0, 0.001]);
 
-        let col_width = 1.75*width/10.0;
+        let col_width = 1.5*width/10.0;
 
         let response = ui.vertical(|ui| {
             egui::CollapsingHeader::new(egui::widget_text::RichText::new("Results").size(15.0).underline())
             .default_open(false)
             .show(ui, |ui| {
-                egui::Grid::new("Result summary").max_col_width(col_width).show(ui, |ui| {
+                egui::Grid::new("Result summary").min_col_width(col_width).show(ui, |ui| {
                     
                     ui.label("Cam feasibility:").rect;
                     let [r, g, b, a] = dict_colormap[&self.cam_disc_feasible];
@@ -622,28 +622,24 @@ impl CamSystem {
                         .rect_filled(rect, 2.0, Rgba::from_rgba_unmultiplied(r, g, b, a));
                     ui.end_row();
 
-                    ui.label("Min/Max velocity:");
-                    ui.label(format!("{:.2} / {:.2} m/s", min_v, max_v));
-                    ui.label("Min/Max accel.:");
-                    ui.label(format!("{:.2} / {:.2} m/s²", min_a, max_a));
-                    ui.end_row();
-
-                    ui.label("Max Hertz pressure:");
-                    ui.label(format!("{:.2} N/mm²", max_hertz));
-                    ui.label("Equivalent load:");
-                    ui.label(format!("{:.2} N", self.p_equiv)).on_hover_text( {
+                    ui.label("Min/Max velocity:\nMin/Max accel.:");
+                    ui.label(format!("{:.2} / {:.2} m/s\n{:.2} / {:.2} m/s²", min_v, max_v, min_a, max_a));
+                    ui.label("Max Hertz pressure:\nEquivalent load:");
+                    ui.label(format!("{:.2} N/mm²\n{:.2} N", max_hertz, self.p_equiv)).on_hover_text(
                         if self.p_equiv.is_nan() {
                             "Make sure the follower doesn't lift off to allow for a calculation"
-                        } else { "Equivalent load for the calculation of L10 or L10_h" }
-                    });
-                    ui.end_row();
-
-                    // L10: Lebensdauer in Millionen Umdrehungen
-                    ui.label("L10:");
-                    ui.label(format!("{:.0} x10e6", self.l_10));
-                    // L10_h: Lebensdauer in Betriebsstunden
-                    ui.label("L10_h:");
-                    ui.label(format!("{:.0} h", self.l_10_h));
+                        } else {
+                            "Equivalent load for the calculation of L10 or L10_h"
+                        }
+                    );
+                    ui.label("L_10:\nL_10_h:");
+                    ui.label(format!("{:.0} x10e6\n{:.0} h", self.l_10, self.l_10_h)).on_hover_text(
+                        if self.l_10.is_nan() {
+                            "Make sure the follower doesn't lift off to allow for a calculation"
+                        } else {
+                            "L_10: Durability in million revolotions of the follower\nL_10_h: Durability in hours"
+                        }
+                    );
                     ui.end_row();
                 });
             });
