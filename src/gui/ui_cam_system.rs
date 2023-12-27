@@ -384,184 +384,187 @@ impl CamSystem {
         let mut rs = vec![];
 
         let response = ui.vertical(|ui| {
+            egui::CollapsingHeader::new(egui::widget_text::RichText::new("System modification").size(15.0).underline())
+            .default_open(true)
+            .show(ui, |ui| {
 
-            // General cam inputs
-            ui.add_sized([width, 1.0], egui::Separator::default());
-            egui::Grid::new("GeneralCamInputs").show(ui, |ui| {
-                let col_width = width/6.0;
+                // General cam inputs
+                egui::Grid::new("GeneralCamInputs").show(ui, |ui| {
+                    let col_width = width/6.0;
 
-                ui.label("Cam system type:");
-                let res_cam_type = egui::ComboBox::from_id_source("Select value")
-                    .selected_text(format!("{}", self.cam_type))
-                    .width(col_width)
-                    .show_ui(ui, |ui| {
-                        for t in cam_type_list.iter() {
-                            let r = ui.selectable_value(&mut self.cam_type, t.clone(), (format!("{}", t)));
-                            rs.push(r.changed())
-                        }
-                    }).response;
+                    ui.label("Cam system type:");
+                    let res_cam_type = egui::ComboBox::from_id_source("Select value")
+                        .selected_text(format!("{}", self.cam_type))
+                        .width(col_width)
+                        .show_ui(ui, |ui| {
+                            for t in cam_type_list.iter() {
+                                let r = ui.selectable_value(&mut self.cam_type, t.clone(), (format!("{}", t)));
+                                rs.push(r.changed())
+                            }
+                        }).response;
 
-                ui.label("Omega:");
-                let res_rpm = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.rpm)
-                    .speed(1.0)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY).suffix(" 1/min"));
+                    ui.label("Omega:");
+                    let res_rpm = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.rpm)
+                        .speed(1.0)
+                        .update_while_editing(false)
+                        .clamp_range(0.0..=std::f64::INFINITY).suffix(" 1/min"));
 
-                ui.label("Gravity:");
-                let res_grav = ui.add(egui::Checkbox::without_text(&mut self.gravity))
-                    .on_hover_text("Enable if vertical layout, disable if horizontal layout");
-                ui.end_row();
+                    ui.label("Gravity:");
+                    let res_grav = ui.add(egui::Checkbox::without_text(&mut self.gravity))
+                        .on_hover_text("Enable if vertical layout, disable if horizontal layout");
+                    ui.end_row();
 
 
-                ui.label("Follower radius:");
-                let res_radius = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.follower.radius_follower)
-                    .speed(0.0001)
-                    .update_while_editing(false)
-                    .custom_parser(parser_m_to_mm)
-                    .custom_formatter(formatter_mm_to_m)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .suffix(" mm"));
-
-                ui.label("Contact length:");
-                let res_contact_length = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.contact_length)
+                    ui.label("Follower radius:");
+                    let res_radius = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.follower.radius_follower)
                         .speed(0.0001)
                         .update_while_editing(false)
-                        .clamp_range(0.0..=std::f64::INFINITY)
                         .custom_parser(parser_m_to_mm)
                         .custom_formatter(formatter_mm_to_m)
-                        .suffix(" mm"))
-                    .on_hover_text("Contact length of the cam follower with the cam");
+                        .clamp_range(0.0..=std::f64::INFINITY)
+                        .suffix(" mm"));
 
-                ui.label("Follower mass:");
-                let res_mass = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.mass)
-                    .speed(0.1)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .suffix(" kg"));
-                ui.end_row();
+                    ui.label("Contact length:");
+                    let res_contact_length = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.contact_length)
+                            .speed(0.0001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix(" mm"))
+                        .on_hover_text("Contact length of the cam follower with the cam");
 
-                ui.label("Spring rate:");
-                let res_spring_rate = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.spring_rate)
-                    .speed(100)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .custom_parser(|s| {
-                        match s.parse::<f64>() {
-                            Ok(s) => Some(s*1000.0),
-                            Err(e) => Some(0.0)
-                        }
-                    }).custom_formatter(|n, _| format!("{:.2}", n/1000.0))
-                    .suffix(" N/mm"));
+                    ui.label("Follower mass:");
+                    let res_mass = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.mass)
+                        .speed(0.1)
+                        .update_while_editing(false)
+                        .clamp_range(0.0..=std::f64::INFINITY)
+                        .suffix(" kg"));
+                    ui.end_row();
 
-                ui.label("Spring preload:");
-                let res_spring_preload = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.spring_pretension)
+                    ui.label("Spring rate:");
+                    let res_spring_rate = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.spring_rate)
+                        .speed(100)
+                        .update_while_editing(false)
+                        .clamp_range(0.0..=std::f64::INFINITY)
+                        .custom_parser(|s| {
+                            match s.parse::<f64>() {
+                                Ok(s) => Some(s*1000.0),
+                                Err(e) => Some(0.0)
+                            }
+                        }).custom_formatter(|n, _| format!("{:.2}", n/1000.0))
+                        .suffix(" N/mm"));
+
+                    ui.label("Spring preload:");
+                    let res_spring_preload = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.spring_pretension)
+                            .speed(1.0)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .suffix(" N"))
+                        .on_hover_text("Preload of the spring at the smallest diameter (ideally at 0°)");
+                    ui.end_row();
+
+                    ui.label("Max. Hertz:");
+                    let res_max_hertz = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.max_hertz)
+                        .speed(1.0)
+                        .update_while_editing(false)
+                        .clamp_range(0.0..=std::f64::INFINITY)
+                        .suffix(" N/mm²"))
+                    .on_hover_text("PMax. allowed hertzian pressure of either contact partner");
+
+                    ui.label("C_stat:");
+                    let res_c_stat = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_stat)
                         .speed(1.0)
                         .update_while_editing(false)
                         .clamp_range(0.0..=std::f64::INFINITY)
                         .suffix(" N"))
-                    .on_hover_text("Preload of the spring at the smallest diameter (ideally at 0°)");
-                ui.end_row();
-
-                ui.label("Max. Hertz:");
-                let res_max_hertz = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.max_hertz)
-                    .speed(1.0)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .suffix(" N/mm²"))
-                .on_hover_text("PMax. allowed hertzian pressure of either contact partner");
-
-                ui.label("C_stat:");
-                let res_c_stat = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_stat)
-                    .speed(1.0)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .suffix(" N"))
-                .on_hover_text("C_stat according followers data sheet");
-                ui.label("C_dyn:");
-                let res_c_dyn = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_dyn)
-                    .speed(1.0)
-                    .update_while_editing(false)
-                    .clamp_range(0.0..=std::f64::INFINITY)
-                    .suffix(" N"))
-                .on_hover_text("C_dyn according followers data sheet");
-
-                ui.end_row();
-
-                let r = res_cam_type.changed() | res_rpm.changed() | res_grav.changed() 
-                | res_contact_length.changed() | res_mass.changed() | res_radius.changed()
-                | res_spring_preload.changed() | res_spring_rate.changed() | res_max_hertz.changed()
-                | res_c_stat.changed() | res_c_dyn.changed();
-                rs.push(r);
-                
-                // Additional row only for cylindric bead cam
-                if let CamType::CylindricBead(ref mut cylinder) = self.cam_type {
-                    ui.label("Base radius:");
-                    let res_base_diam = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.base_radius)
-                        .speed(0.0001)
+                    .on_hover_text("C_stat according followers data sheet");
+                    ui.label("C_dyn:");
+                    let res_c_dyn = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut self.c_dyn)
+                        .speed(1.0)
                         .update_while_editing(false)
                         .clamp_range(0.0..=std::f64::INFINITY)
-                        .custom_parser(parser_m_to_mm)
-                        .custom_formatter(formatter_mm_to_m)
-                        .suffix( "mm"));
+                        .suffix(" N"))
+                    .on_hover_text("C_dyn according followers data sheet");
 
-                    ui.label("Bead separation:");
-                    let res_bead_thickness = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.min_bead_thickness)
-                        .speed(0.0001)
-                        .update_while_editing(false)
-                        .clamp_range(0.0..=std::f64::INFINITY)
-                        .custom_parser(parser_m_to_mm)
-                        .custom_formatter(formatter_mm_to_m)
-                        .suffix(" mm"));
+                    ui.end_row();
 
-                    let r = res_base_diam.changed() | res_bead_thickness.changed();
+                    let r = res_cam_type.changed() | res_rpm.changed() | res_grav.changed() 
+                    | res_contact_length.changed() | res_mass.changed() | res_radius.changed()
+                    | res_spring_preload.changed() | res_spring_rate.changed() | res_max_hertz.changed()
+                    | res_c_stat.changed() | res_c_dyn.changed();
                     rs.push(r);
-                }
+                    
+                    // Additional row only for cylindric bead cam
+                    if let CamType::CylindricBead(ref mut cylinder) = self.cam_type {
+                        ui.label("Base radius:");
+                        let res_base_diam = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.base_radius)
+                            .speed(0.0001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix( "mm"));
 
-                // Additional row only for cylindric groove cam
-                if let CamType::CylindricGroove(ref mut cylinder) = self.cam_type {
-                    ui.label("Base radius:");
-                    let res_base_diam = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.base_radius)
-                        .speed(0.001)
-                        .update_while_editing(false)
-                        .clamp_range(0.0..=std::f64::INFINITY)
-                        .custom_parser(parser_m_to_mm)
-                        .custom_formatter(formatter_mm_to_m)
-                        .suffix( "mm"));
+                        ui.label("Bead separation:");
+                        let res_bead_thickness = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.min_bead_thickness)
+                            .speed(0.0001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix(" mm"));
 
-                    ui.label("Groove play:");
-                    let res_groove_play = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.groove_play)
-                        .speed(0.00001)
-                        .update_while_editing(false)
-                        .clamp_range(0.0..=std::f64::INFINITY)
-                        .custom_parser(parser_m_to_mm)
-                        .custom_formatter(formatter_mm_to_m)
-                        .suffix( "mm"));
-                    let r = res_base_diam.changed() | res_groove_play.changed();
-                    rs.push(r);
-                }
+                        let r = res_base_diam.changed() | res_bead_thickness.changed();
+                        rs.push(r);
+                    }
 
-                // Additional row only for planar groove
-                if let CamType::PlanarGroove(ref mut groove) = self.cam_type {
-                    ui.label("Groove play:");
-                    let res_groove_play = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut groove.groove_play)
-                        .speed(0.00001)
-                        .update_while_editing(false)
-                        .clamp_range(0.0..=std::f64::INFINITY)
-                        .custom_parser(parser_m_to_mm)
-                        .custom_formatter(formatter_mm_to_m)
-                        .suffix( "mm"));
-                    let r = res_groove_play.changed();
-                    rs.push(r);
-                }
-            });
+                    // Additional row only for cylindric groove cam
+                    if let CamType::CylindricGroove(ref mut cylinder) = self.cam_type {
+                        ui.label("Base radius:");
+                        let res_base_diam = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.base_radius)
+                            .speed(0.001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix( "mm"));
 
+                        ui.label("Groove play:");
+                        let res_groove_play = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut cylinder.groove_play)
+                            .speed(0.00001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix( "mm"));
+                        let r = res_base_diam.changed() | res_groove_play.changed();
+                        rs.push(r);
+                    }
 
-            ui.horizontal(|ui| {
-                ui.label("Animation speed:");
-                ui.add(egui::Slider::new(&mut self.animation_speed, 0.0..=100.0).suffix(" %"));
+                    // Additional row only for planar groove
+                    if let CamType::PlanarGroove(ref mut groove) = self.cam_type {
+                        ui.label("Groove play:");
+                        let res_groove_play = ui.add_sized([col_width, 20.0], egui::DragValue::new(&mut groove.groove_play)
+                            .speed(0.00001)
+                            .update_while_editing(false)
+                            .clamp_range(0.0..=std::f64::INFINITY)
+                            .custom_parser(parser_m_to_mm)
+                            .custom_formatter(formatter_mm_to_m)
+                            .suffix( "mm"));
+                        let r = res_groove_play.changed();
+                        rs.push(r);
+                    }
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Animation speed:");
+                    ui.add(egui::Slider::new(&mut self.animation_speed, 0.0..=100.0).suffix(" %"));
+                });
             });
             ui.add_sized([width, 1.0], egui::Separator::default());
-            
+                
+            // UI for follower layout
             if self.follower.ui_follower_modification(ui, width, height) {
                 rs.push(true);
             };
@@ -570,14 +573,13 @@ impl CamSystem {
             if self.process_forces.ui_process_force_modification(ui, width, height) {
                 rs.push(true);
             }
-
         }).response;
 
         // Update the planar_disc if any input parameter changed
         if rs.iter().any(|x| *x == true) {
             self.update_sections();
         }
-
+        
         response
     }
 
