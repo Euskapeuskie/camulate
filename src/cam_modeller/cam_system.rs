@@ -533,30 +533,23 @@ impl CamSystem {
 
 
     pub fn update_index(&mut self) -> () {
-        let n_elements = self.follower.phis.len() as f64;
-        let index_next = self.index + ((self.rpm/3600.0)*n_elements * self.animation_speed/100.0) as usize;
+        let n_elements = self.follower.phis.len();
+        let index_next = self.index + ((self.rpm/3600.0)*n_elements as f64 * self.animation_speed/100.0) as usize;
         
+        // Update the complete graph (whole 360° rotation) if animation speed is 0
         if self.animation_speed == 0.0 {
-            for i in self.index..n_elements as usize {
+            for i in self.index..n_elements {
                 self.update_follower_position(i);
-                self.index = n_elements as usize - 1;
+                self.index = n_elements;
             }
         }
 
+        // Simulate only the next number of steps
         else {
             for i in self.index..=index_next {
-                if i >= self.follower.phis.len() {
-                    self.update_follower_position(i%self.follower.phis.len());
-                    self.index = i%self.follower.phis.len();
-                }
-                else {
-                    self.update_follower_position(i);
-                    self.index += 1;
-                }
+                self.update_follower_position(i & n_elements);
+                self.index = (i+1) % n_elements;
             };
-            if self.index == self.follower.phis.len() {
-                self.index = 0;
-            }
         }
 
     }

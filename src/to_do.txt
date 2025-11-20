@@ -1,11 +1,15 @@
+
+
+
 - Hertzsche Pressung auch für Rückseitigen Kontakt berechnen (Wulst und Nutkurven) als zweite Kurve im Diagramm
-- UI: Einklappen von Eingabefenstern
 - Bei zylindrischen Kurvenscheiben keine Rastbewegung angeben wenn 0
 - Federkraft noch ändern, dass immer der kleinste Radiuswert genommen wird
 - Wendepunktverschiebung R-U -> U-R:
     - Kucken ist das vorherige Gesetz Rast-Umehr?
     - Berechnung der Beschleunigung des vorherigen Gesetzes muss im Voraus erfolgen
     - in gui mit einbauen
+    - Struct follower noch ergänzen dass auch normed velocities und accelerations berechnet werden
+
 
 - Kurven
     - Simple Zylinderkurve

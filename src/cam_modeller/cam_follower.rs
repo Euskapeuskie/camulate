@@ -16,6 +16,8 @@ use super::movement_laws_rest_return::{MovementLawsRestReturn, MovementLawsRetur
 pub struct CamFollower {
     pub phis: Vec<f64>,
     pub radius: Vec<f64>,
+    pub normed_velocites: Vec<f64>,
+    pub normed_accelerations: Vec<f64>,
     pub radius_follower: f64,
     pub accuracy: f64,
     pub sections: Vec<Section>,
@@ -101,6 +103,8 @@ impl CamFollower {
         CamFollower {
             phis: phis,
             radius: vec![0.0; n_elements],
+            normed_velocites: vec![0.0; n_elements],
+            normed_accelerations: vec![0.0; n_elements],
             radius_follower: radius_follower,
             accuracy: accuracy,
             sections: vec![],
@@ -123,6 +127,8 @@ impl CamFollower {
         // Round degree inputs to the precision of the accuracy
         let deg_start = (deg_start / self.accuracy).round() * self.accuracy;
         let deg_end = (deg_end / self.accuracy).round() * self.accuracy;
+
+        self.check_prev_section_rest_return(deg_start);
 
         // Get indices of deg_start and deg_end
         let index_start = (deg_start / self.accuracy) as usize;
@@ -164,5 +170,19 @@ impl CamFollower {
     /// is specified, we can find the radius of the previous section
     pub fn sort_sections(&mut self) -> () {
         self.sections.sort_by(|a, b| a.deg_start.total_cmp(&b.deg_start));
+    }
+
+
+    /// Check if the previous section is rest-return
+    /// to automatically calculate the correct lambda value
+    pub fn check_prev_section_rest_return(&self, deg_start: f64) -> bool {
+        for section in self.sections.iter() {
+            if section.deg_end == deg_start {
+                if let MovementType::RestReturn(_) = section.movement_type {
+                    return true
+                }
+            } 
+        }
+        false
     }
 }

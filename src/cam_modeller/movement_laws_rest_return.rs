@@ -194,3 +194,17 @@ fn harmonic_combination_return_rest(incline: f64, n_elements: usize, lambda: f64
     let _ = zs.iter_mut().for_each(|z| *z *= incline);
     zs
 }
+
+
+/// Function to calculate the optimized lambda value for a return rest section
+/// following a rest-return section
+/// 
+/// # Inputs
+/// * `a_return`: The normed acceleration of the rest-return section at its return position
+/// 
+/// # Returns
+/// * `lambda`: The shift parameter for the following harmonic combination
+pub fn optimize_lambda_return_rest_harmonic(a_return: f64) -> f64 {
+    0.0
+
+}
