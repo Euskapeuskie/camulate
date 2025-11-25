@@ -3,7 +3,7 @@ use egui_plot::PlotPoints;
 
 use super::cam_system::CamType;
 
-/// Convert polar to cartesian coordiante system
+/// Convert polar to cartesian coordiantes
 /// 
 /// # Inputs
 /// * `phis`: vector of angles in degrees
