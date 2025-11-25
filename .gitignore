@@ -3,4 +3,4 @@
 !/target/release/camulate.exe
 /target/debug
 /target/doc
-
+/assetts/*.pdf
